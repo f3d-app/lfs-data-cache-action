@@ -1,0 +1,82 @@
+name: 'Copy LFS data'
+description: 'Copy LFS data using cache when possible'
+inputs:
+  type:
+    description: 'Whether this action produce/consume LFS data'
+    default: 'producer'
+  repository: 
+    description: 'Repository to recover LFS data from'
+    required: true
+  lfs_sha:
+    description: 'LFS sha to recover'
+    required: true
+  cache_index:
+    description: 'An index used in the name of the cache'
+    default: '0'
+  target_directory:
+    description: 'Directory to copy LFS data to'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Check required inputs
+      shell: bash
+      run: |
+        [[ "${{ inputs.repository }}" ]] || { echo "repository input is empty" ; exit 1; }
+        [[ "${{ inputs.lfs_sha }}" ]] || { echo "lfs_sha input is empty" ; exit 1; }
+        [[ "${{ inputs.target_directory }}" ]] || { echo "target_directory input is empty" ; exit 1; }
+ 
+    - name: Cache LFS data
+      id: cache-lfs
+      uses: actions/cache@v3
+      with:
+        path: lfs_data
+        key: lfs-data-${{inputs.lfs_sha}}-${{inputs.cache_index}}
+
+    - name: Checkout LFS data
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'producer'
+      uses: actions/checkout@v3
+      with:
+        path: 'lfs_data'
+        fetch-depth: 0
+        lfs: true
+
+    - name: Upload LFS artifact
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'producer'
+      uses: actions/upload-artifact@master
+      with:
+        name: lfs-data
+        path: lfs_data
+
+    - name: Download LFS artifact
+      id: download-artifact
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'consumer'
+      uses: actions/download-artifact@master
+      continue-on-error: true
+      with:
+        name: lfs-data
+        path: lfs_data
+
+    - name: Checkout LFS data
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        steps.download-artifact.outcome != 'success' &&
+        inputs.type == 'consumer'
+      uses: actions/checkout@v3
+      with:
+        path: 'lfs_data'
+        fetch-depth: 0
+        lfs: true
+
+    - name: Setup LFS data
+      working-directory: ${{github.workspace}}
+      shell: bash
+      run: cmake -P $GITHUB_ACTION_PATH/copy_lfs.cmake ./lfs_data ${{ inputs.target_directory }}
