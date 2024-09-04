@@ -4,18 +4,18 @@ inputs:
   type:
     description: 'Whether this action produce/consume LFS data'
     default: 'producer'
-  repository: 
+  repository:
     description: 'Repository to recover LFS data from'
     required: true
   lfs_sha:
-    description: 'LFS sha to recover'
-    required: true
-  cache_index:
-    description: 'An index used in the name of the cache'
-    default: '0'
+    description: 'LFS sha to recover. If not set, target directory will be used to recover it.'
+    required: false
+  cache_postfix:
+    description: 'A postfix to differentiate between caches'
+    default: 'cache'
   target_directory:
     description: 'Directory to copy LFS data to'
-    required: true
+    default: 'source'
 
 runs:
   using: "composite"
@@ -25,23 +25,43 @@ runs:
       shell: bash
       run: |
         [[ "${{ inputs.repository }}" ]] || { echo "repository input is empty" ; exit 1; }
-        [[ "${{ inputs.lfs_sha }}" ]] || { echo "lfs_sha input is empty" ; exit 1; }
-        [[ "${{ inputs.target_directory }}" ]] || { echo "target_directory input is empty" ; exit 1; }
- 
+
+    - name: Create a working directory
+      working-directory: ${{github.workspace}}
+      shell: bash
+      run: mkdir lfs-data-cache
+
+    - name: Checkout repository without LFS data
+      if: inputs.lfs_sha == ''
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        path: 'lfs-data-cache/lfs_source'
+        fetch-depth: 0
+        lfs: false
+
+    - name: Set LFS output var without inputs
+      if: inputs.lfs_sha == ''
+      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
+      id: lfs_sha_recover
+      shell: bash
+      run: echo "lfs_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_OUTPUT
+
     - name: Cache LFS data
       id: cache-lfs
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: lfs_data
-        key: lfs-data-${{inputs.lfs_sha}}-${{inputs.cache_index}}
+        path: 'lfs-data-cache/lfs_data'
+        key: lfs-data-${{inputs.lfs_sha == '' && ${{steps.lfs_sha_recover.outputs.lfs_sha}} || ${{inputs.lfs_sha}} }}-${{inputs.cache_postfix}}
 
-    - name: Checkout LFS data
+    - name: Checkout LFS data for artifact producer
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        path: 'lfs_data'
+        repository: ${{ inputs.repository }}
+        path: 'lfs-data-cache/lfs_data'
         fetch-depth: 0
         lfs: true
 
@@ -49,34 +69,37 @@ runs:
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
-        name: lfs-data
-        path: lfs_data
+        name: lfs-data-${{inputs.cache_postfix}}
+        path: 'lfs-data-cache/lfs_data'
+        overwrite: true
+        include-hidden-files: true
 
     - name: Download LFS artifact
       id: download-artifact
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'consumer'
-      uses: actions/download-artifact@master
+      uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: lfs-data
-        path: lfs_data
+        name: lfs-data-${{inputs.cache_postfix}}
+        path: 'lfs-data-cache/lfs_data'
 
-    - name: Checkout LFS data
+    - name: Checkout LFS data (last resort)
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         steps.download-artifact.outcome != 'success' &&
         inputs.type == 'consumer'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        path: 'lfs_data'
+        repository: ${{ inputs.repository }}
+        path: 'lfs-data-cache/lfs_data'
         fetch-depth: 0
         lfs: true
 
     - name: Setup LFS data
       working-directory: ${{github.workspace}}
       shell: bash
-      run: cmake -P $GITHUB_ACTION_PATH/copy_lfs.cmake ./lfs_data ${{ inputs.target_directory }}
+      run: cmake -P $GITHUB_ACTION_PATH/copy_lfs.cmake 'lfs-data-cache/lfs_data' ${{ inputs.target_directory }}
