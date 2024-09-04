@@ -39,7 +39,7 @@ Finally, Producer/Consumer will copy the LFS data only using cmake to the `targe
 ## Usage
 
 In an first job, use the `producer` action, which output the LFS sha that will be produced
-In a second job, usually a matrix joib, depending on the first,
+In a second job, usually a matrix job, depending on the first,
 recover the LFS sha from first job and use the `consumer` action.
 
 ```
@@ -66,6 +66,10 @@ jobs:
     # Use producer action to recover the LFS data and upload it as cache/artifacts
     - name: Cache LFS Data
       uses: f3d-app/lfs-data-cache-action:v1
+
+#----------------------------------------------------------------------------
+# Actual CI: Recover LFS data first
+#----------------------------------------------------------------------------
 
   recover_lfs:
     needs: cache_lfs

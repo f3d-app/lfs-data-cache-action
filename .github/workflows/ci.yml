@@ -12,10 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
-#----------------------------------------------------------------------------
-# Cache LFS: Checkout LFS data and update the cache to limit LFS bandwidth
-#----------------------------------------------------------------------------
   cache_lfs:
     runs-on: ubuntu-latest
     name: Update LFS data cache
