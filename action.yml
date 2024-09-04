@@ -6,7 +6,8 @@ inputs:
     default: 'producer'
   repository:
     description: 'Repository to recover LFS data from'
-    required: true
+    required: false
+    default: ${{ github.repository }}
   lfs_sha:
     description: 'LFS sha to recover. If not set, target directory will be used to recover it.'
     required: false
@@ -33,26 +34,25 @@ runs:
     - name: Create a working directory
       working-directory: ${{github.workspace}}
       shell: bash
-      run: mkdir lfs-data-cache
+      run: mkdir lfs_data_cache
 
     - name: Checkout repository without LFS data
       if: inputs.lfs_sha == ''
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
-        path: 'lfs-data-cache/lfs_source'
+        path: 'lfs_data_cache/lfs_source'
         fetch-depth: 0
         lfs: false
 
-    - name: Set LFS sha env var without inputs
+    - name: Set LFS sha env var from repository
       if: inputs.lfs_sha == ''
-      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_source
       shell: bash
       run: echo "lfs_data_cache_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_ENV
 
-    - name: Set LFS sha env var with inputs
+    - name: Set LFS sha env var from inputs
       if: inputs.lfs_sha != ''
-      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
       shell: bash
       run: echo "lfs_data_cache_sha=${{inputs.lfs_sha}}" >> $GITHUB_ENV
 
@@ -60,11 +60,11 @@ runs:
       id: cache-lfs
       uses: actions/cache@v4
       with:
-        path: 'lfs-data-cache/lfs_data'
+        path: 'lfs_data_cache/lfs_data'
         key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
     - name: Set LFS output sha
-      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_source
       id: lfs_sha_recover
       shell: bash
       run: echo "lfs_sha=${{env.lfs_data_cache_sha}}" >> $GITHUB_OUTPUT
@@ -77,7 +77,7 @@ runs:
       with:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
-        path: 'lfs-data-cache/lfs_data'
+        path: 'lfs_data_cache/lfs_data'
         fetch-depth: 0
         lfs: true
 
@@ -88,7 +88,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: lfs-data-${{inputs.cache_postfix}}
-        path: 'lfs-data-cache/lfs_data'
+        path: 'lfs_data_cache/lfs_data'
         overwrite: true
         include-hidden-files: true
 
@@ -101,7 +101,7 @@ runs:
       continue-on-error: true
       with:
         name: lfs-data-${{inputs.cache_postfix}}
-        path: 'lfs-data-cache/lfs_data'
+        path: 'lfs_data_cache/lfs_data'
 
     - name: Checkout LFS data (last resort)
       if: |
@@ -112,11 +112,11 @@ runs:
       with:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
-        path: 'lfs-data-cache/lfs_data'
+        path: 'lfs_data_cache/lfs_data'
         fetch-depth: 0
         lfs: true
 
     - name: Setup LFS data
       working-directory: ${{github.workspace}}
       shell: bash
-      run: cmake -P $GITHUB_ACTION_PATH/copy_lfs.cmake 'lfs-data-cache/lfs_data' ${{ inputs.target_directory }}
+      run: cmake -P $GITHUB_ACTION_PATH/copy_lfs.cmake 'lfs_data_cache/lfs_data' ${{ inputs.target_directory }}
