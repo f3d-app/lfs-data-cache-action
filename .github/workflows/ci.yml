@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref_name }}'
+  cancel-in-progress: true
+
+jobs:
+
+#----------------------------------------------------------------------------
+# Cache LFS: Checkout LFS data and update the cache to limit LFS bandwidth
+#----------------------------------------------------------------------------
+  cache_lfs:
+    runs-on: ubuntu-latest
+    name: Update LFS data cache
+    outputs:
+      lfs_sha: ${{ steps.lfs_sha.outputs.lfs_sha }}
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: 'lfs-data-cache_action'
+        fetch-depth: 0
+
+    - name: Use lfs-data-cache action
+      id: lfs-data-cache
+      uses: ./lfs-data-cache_action
+      with:
+        type: 'producer' 
+        repository: 'f3d-app/f3d'
+        cache_postfix: 'ci-cache'
+
+    - name: Set output
+      id: lfs_sha
+      shell: bash
+      run: echo "lfs_sha=$(steps.lfs-data-cache.outputs.lfs_sha)" >> $GITHUB_OUTPUT
+
+  ci:
+    name: CI
+    needs: cache_lfs
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13]
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+
+    - name: Output directory
+      shell: bash
+      run: mkdir output_dir
+     
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: 'lfs-data-cache_action'
+        fetch-depth: 0
+
+    - name: Use lfs-data-cache action
+      uses: ./lfs-data-cache_action
+      with:
+        type: 'consumer' 
+        repository: 'f3d-app/f3d'
+        lfs_sha: ${{ needs.cache_lfs.outputs.lfs_sha}}
+        cache_postfix: 'ci-cache'
+        target_directory: 'output_dir'
+
+    - name: Checkout output directory
+      shell: bash
+      run: ls output_dir/

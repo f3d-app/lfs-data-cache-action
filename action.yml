@@ -14,8 +14,10 @@ inputs:
     description: 'A postfix to differentiate between caches'
     default: 'cache'
   target_directory:
-    description: 'Directory to copy LFS data to'
+    description: 'Existing directory to copy LFS data to'
     default: 'source'
+outputs:
+  lfs_sha: ${{ steps.lfs_sha_recover.outputs.lfs_sha }}
 
 runs:
   using: "composite"
