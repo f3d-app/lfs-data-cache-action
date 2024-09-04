@@ -44,19 +44,32 @@ runs:
         fetch-depth: 0
         lfs: false
 
-    - name: Set LFS output var without inputs
+    - name: Set LFS sha env var without inputs
       if: inputs.lfs_sha == ''
       working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
       id: lfs_sha_recover
       shell: bash
-      run: echo "lfs_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_OUTPUT
+      run: echo "lfs_data_cache_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_ENV
+
+    - name: Set LFS sha env var with inputs
+      if: inputs.lfs_sha != ''
+      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
+      id: lfs_sha_recover
+      shell: bash
+      run: echo "lfs_data_cache_sha=${{inputs.lfs_sha}}" >> $GITHUB_ENV
 
     - name: Cache LFS data
       id: cache-lfs
       uses: actions/cache@v4
       with:
         path: 'lfs-data-cache/lfs_data'
-        key: lfs-data-${{inputs.lfs_sha == '' && ${{steps.lfs_sha_recover.outputs.lfs_sha}} || ${{inputs.lfs_sha}} }}-${{inputs.cache_postfix}}
+        key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
+
+    - name: Set LFS output sha
+      working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
+      id: lfs_sha_recover
+      shell: bash
+      run: echo "lfs_sha=${{env.lfs_data_cache_sha}}" >> $GITHUB_OUTPUT
 
     - name: Checkout LFS data for artifact producer
       if: |
@@ -65,6 +78,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
+        ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs-data-cache/lfs_data'
         fetch-depth: 0
         lfs: true
@@ -99,6 +113,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
+        ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs-data-cache/lfs_data'
         fetch-depth: 0
         lfs: true
