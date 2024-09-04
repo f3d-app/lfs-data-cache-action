@@ -76,11 +76,4 @@ jobs:
 
     - name: Check output has expected size
       shell: bash
-      run: |
-        if [[ `cat output_dir/testing/data/f3d.vtp | wc -c` == 4104 ]]; then
-        echo "File is of expected size"
-        exit 0
-        else
-        echo "File is not of expected size"
-        exit 1
-        fi        
+      run: cmake -P ./lfs-data-cache_action/.github/workflows/check_size.cmake output_dir/testing/data/f3d.vtp
