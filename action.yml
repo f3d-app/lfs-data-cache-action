@@ -47,14 +47,12 @@ runs:
     - name: Set LFS sha env var without inputs
       if: inputs.lfs_sha == ''
       working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
-      id: lfs_sha_recover
       shell: bash
       run: echo "lfs_data_cache_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_ENV
 
     - name: Set LFS sha env var with inputs
       if: inputs.lfs_sha != ''
       working-directory: ${{github.workspace}}/lfs-data-cache/lfs_source
-      id: lfs_sha_recover
       shell: bash
       run: echo "lfs_data_cache_sha=${{inputs.lfs_sha}}" >> $GITHUB_ENV
 
