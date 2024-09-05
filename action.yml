@@ -1,5 +1,8 @@
 name: 'Copy LFS data'
 description: 'Copy LFS data using cache when possible'
+branding:
+  icon: 'package'
+  color: 'red'
 inputs:
   type:
     description: 'Whether this action produce/consume LFS data'
