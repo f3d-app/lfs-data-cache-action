@@ -46,12 +46,10 @@ runs:
         lfs: false
 
     - name: Set LFS sha env var from repository
-      working-directory: ${{github.workspace}}
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_source
       if: inputs.lfs_sha == ''
       shell: bash
-      run: |
-        cd lfs_data_cache/lfs_source
-        echo "lfs_data_cache_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_ENV
+      run: echo "lfs_data_cache_sha=$(git log -n 1 --pretty=format:%H -- `git-lfs ls-files -n`)" >> $GITHUB_ENV
 
     - name: Set LFS sha env var from inputs
       if: inputs.lfs_sha != ''
