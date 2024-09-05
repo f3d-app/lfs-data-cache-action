@@ -60,11 +60,12 @@ jobs:
       uses: actions/checkout@v3
       with:
         path: 'source'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: false
 
     # Use producer action to recover the LFS data and upload it as cache/artifacts
     - name: Cache LFS Data
+      id: lfs_sha_recover
       uses: f3d-app/lfs-data-cache-action:v1
 
 #----------------------------------------------------------------------------
