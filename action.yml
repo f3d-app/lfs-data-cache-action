@@ -1,5 +1,5 @@
-name: 'Copy LFS data'
-description: 'Copy LFS data using cache when possible'
+name: 'Cache LFS data'
+description: 'Recover LFS data using cache when possible'
 branding:
   icon: 'package'
   color: 'red'
