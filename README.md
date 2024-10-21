@@ -66,7 +66,7 @@ jobs:
     # Use producer action to recover the LFS data and upload it as cache/artifacts
     - name: Cache LFS Data
       id: lfs_sha_recover
-      uses: f3d-app/lfs-data-cache-action:v1
+      uses: f3d-app/lfs-data-cache-action@v1
 
 #----------------------------------------------------------------------------
 # Actual CI: Recover LFS data first
@@ -84,7 +84,7 @@ jobs:
         lfs: false
 
     - name: Recover LFS Data
-      uses: f3d-app/lfs-data-cache-action:v1
+      uses: f3d-app/lfs-data-cache-action@v1
       with:
         workflow_label: 'consumer'
         lfs_sha: ${{ needs.cache_lfs.outputs.lfs_sha}}
