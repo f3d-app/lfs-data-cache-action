@@ -92,6 +92,7 @@ runs:
         name: lfs-data-${{inputs.cache_postfix}}
         path: 'lfs_data_cache/lfs_data'
         overwrite: true
+        include-hidden-files: true
 
     - name: Download LFS artifact
       id: download-artifact
