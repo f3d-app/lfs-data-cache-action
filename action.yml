@@ -63,6 +63,7 @@ runs:
       id: cache-lfs
       uses: actions/cache/restore@v4
       with:
+        enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
         key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
