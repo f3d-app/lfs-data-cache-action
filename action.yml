@@ -83,11 +83,6 @@ runs:
         fetch-depth: 1
         lfs: true
 
-    - name: Remove not needed .git folder
-      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
-      shell: bash
-      run: rm -rf .git
-
     - name: Upload LFS artifact
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
