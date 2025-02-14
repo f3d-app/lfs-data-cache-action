@@ -45,7 +45,7 @@ runs:
       with:
         repository: ${{ inputs.repository }}
         path: 'lfs_data_cache/lfs_source'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: false
 
     - name: Set LFS sha env var from repository
@@ -80,8 +80,13 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: true
+
+    - name: Remove not needed .git folder
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
+      shell: bash
+      run: rm -rf .git
 
     - name: Upload LFS artifact
       if: |
@@ -92,7 +97,6 @@ runs:
         name: lfs-data-${{inputs.cache_postfix}}
         path: 'lfs_data_cache/lfs_data'
         overwrite: true
-        include-hidden-files: true
 
     - name: Download LFS artifact
       id: download-artifact
@@ -115,7 +119,7 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: true
 
     - name: Save LFS data cache
