@@ -59,9 +59,9 @@ runs:
       shell: bash
       run: echo "lfs_data_cache_sha=${{inputs.lfs_sha}}" >> $GITHUB_ENV
 
-    - name: Restore cached LFS data
+    - name: Cached LFS data
       id: cache-lfs
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v4
       with:
         enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
@@ -124,17 +124,6 @@ runs:
         path: 'lfs_data_cache/lfs_data'
         fetch-depth: 1
         lfs: true
-
-    - name: Save LFS data cache
-      if: |
-        steps.cache-lfs.outputs.cache-hit != 'true' &&
-        inputs.type == 'producer'
-      id: cache-lfs-save
-      uses: actions/cache/save@v4
-      with:
-        enableCrossOsArchive: true
-        path: 'lfs_data_cache/lfs_data'
-        key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
     - name: Setup LFS data
       working-directory: ${{github.workspace}}
