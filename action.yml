@@ -106,6 +106,14 @@ runs:
         name: lfs-data-${{inputs.cache_postfix}}
         path: 'lfs_data_cache/lfs_data'
 
+    - name: Reinit the git repository
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'consumer'
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
+      shell: bash
+      run: git init .
+
     - name: Checkout LFS data (last resort)
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
