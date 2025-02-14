@@ -45,7 +45,7 @@ runs:
       with:
         repository: ${{ inputs.repository }}
         path: 'lfs_data_cache/lfs_source'
-        fetch-depth: 1
+        fetch-depth: 0
         lfs: false
 
     - name: Set LFS sha env var from repository
@@ -63,6 +63,7 @@ runs:
       id: cache-lfs
       uses: actions/cache/restore@v4
       with:
+        enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
         key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
@@ -125,6 +126,7 @@ runs:
       id: cache-lfs-save
       uses: actions/cache/save@v4
       with:
+        enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
         key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
