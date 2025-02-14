@@ -67,7 +67,7 @@ jobs:
         type: 'consumer' 
         repository: 'f3d-app/f3d'
         lfs_sha: ${{ needs.cache_lfs.outputs.lfs_sha}}
-        cache_postfix: 'ci-cache'
+        cache_postfix: 'ci-cache-0'
         target_directory: 'output_dir'
 
     - name: Check output has expected size
