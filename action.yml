@@ -59,10 +59,11 @@ runs:
       shell: bash
       run: echo "lfs_data_cache_sha=${{inputs.lfs_sha}}" >> $GITHUB_ENV
 
-    - name: Cache LFS data
+    - name: Restore cached LFS data
       id: cache-lfs
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
+        enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
         key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
@@ -80,13 +81,11 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: true
 
     - name: Upload LFS artifact
-      if: |
-        steps.cache-lfs.outputs.cache-hit != 'true' &&
-        inputs.type == 'producer'
+      if: inputs.type == 'producer'
       uses: actions/upload-artifact@v4
       with:
         name: lfs-data-${{inputs.cache_postfix}}
@@ -105,6 +104,14 @@ runs:
         name: lfs-data-${{inputs.cache_postfix}}
         path: 'lfs_data_cache/lfs_data'
 
+    - name: Reinit the git repository
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'consumer'
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
+      shell: bash
+      run: git init .
+
     - name: Checkout LFS data (last resort)
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
@@ -115,8 +122,19 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
-        fetch-depth: 0
+        fetch-depth: 1
         lfs: true
+
+    - name: Save LFS data cache
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'producer'
+      id: cache-lfs-save
+      uses: actions/cache/save@v4
+      with:
+        enableCrossOsArchive: true
+        path: 'lfs_data_cache/lfs_data'
+        key: lfs-data-${{env.lfs_data_cache_sha}}-${{inputs.cache_postfix}}
 
     - name: Setup LFS data
       working-directory: ${{github.workspace}}
