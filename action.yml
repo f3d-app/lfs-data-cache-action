@@ -72,7 +72,7 @@ runs:
       shell: bash
       run: echo "lfs_sha=${{env.lfs_data_cache_sha}}" >> $GITHUB_OUTPUT
 
-    - name: Checkout LFS data for artifact producer
+    - name: Checkout repository for artifact producer
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
@@ -82,7 +82,15 @@ runs:
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
         fetch-depth: 1
-        lfs: true
+        lfs: false
+
+    - name: Pull LFS data for artifact producer
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        inputs.type == 'producer'
+      shell: bash
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
+      run: git lfs pull
 
     - name: Upload LFS artifact
       if: inputs.type == 'producer'
@@ -112,7 +120,7 @@ runs:
       shell: bash
       run: git init .
 
-    - name: Checkout LFS data (last resort)
+    - name: Checkout repository (last resort)
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         steps.download-artifact.outcome != 'success' &&
@@ -123,7 +131,16 @@ runs:
         ref: ${{env.lfs_data_cache_sha}}
         path: 'lfs_data_cache/lfs_data'
         fetch-depth: 1
-        lfs: true
+        lfs: false
+
+    - name: Pull LFS data (last resort)
+      if: |
+        steps.cache-lfs.outputs.cache-hit != 'true' &&
+        steps.download-artifact.outcome != 'success' &&
+        inputs.type == 'consumer'
+      shell: bash
+      working-directory: ${{github.workspace}}/lfs_data_cache/lfs_data
+      run: git lfs pull
 
     - name: Save LFS data cache
       if: |
