@@ -17,6 +17,7 @@ Is has the following inputs:
 
  - `type`: should be `producer` or `consumer`, default to `producer`
  - `repository`: the git repository to produce LFS data from, default: ${{ github.repository }}
+ - `ref`: the branch, tag or SHA to checkout to look for LFS data in, default: `''`
  - `lfs_sha`: The git sha to recover LFS data from, optional
  - `cache_postfix`: An postfix added to the cache name, to support multiple caches, default to `cache`
  - `target_directory`: A target directory to copy LFS data to

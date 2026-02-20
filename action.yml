@@ -11,6 +11,10 @@ inputs:
     description: 'Repository to recover LFS data from'
     required: false
     default: ${{ github.repository }}
+  ref:
+    description: 'branch, tag or SHA to checkout and look for LFS data in'
+    required: false
+    default: ''
   lfs_sha:
     description: 'LFS sha to recover. If not set, target directory will be used to recover it.'
     required: false
@@ -43,6 +47,7 @@ runs:
       if: inputs.lfs_sha == ''
       uses: actions/checkout@v4
       with:
+        ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository }}
         path: 'lfs_data_cache/lfs_source'
         fetch-depth: 0
