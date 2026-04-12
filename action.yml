@@ -45,7 +45,7 @@ runs:
 
     - name: Checkout repository without LFS data
       if: inputs.lfs_sha == ''
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository }}
@@ -66,7 +66,7 @@ runs:
 
     - name: Restore cached LFS data
       id: cache-lfs
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
@@ -81,7 +81,7 @@ runs:
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
@@ -99,7 +99,7 @@ runs:
 
     - name: Upload LFS artifact
       if: inputs.type == 'producer'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: lfs-data-${{inputs.cache_postfix}}
         path: 'lfs_data_cache/lfs_data'
@@ -111,7 +111,7 @@ runs:
       if: |
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'consumer'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       continue-on-error: true
       with:
         name: lfs-data-${{inputs.cache_postfix}}
@@ -130,7 +130,7 @@ runs:
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         steps.download-artifact.outcome != 'success' &&
         inputs.type == 'consumer'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.repository }}
         ref: ${{env.lfs_data_cache_sha}}
@@ -152,7 +152,7 @@ runs:
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
       id: cache-lfs-save
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
