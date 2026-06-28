@@ -66,7 +66,7 @@ runs:
 
     - name: Restore cached LFS data
       id: cache-lfs
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
@@ -152,7 +152,7 @@ runs:
         steps.cache-lfs.outputs.cache-hit != 'true' &&
         inputs.type == 'producer'
       id: cache-lfs-save
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         enableCrossOsArchive: true
         path: 'lfs_data_cache/lfs_data'
